@@ -2,8 +2,8 @@
  * File: pdf_reader_app/static/js/pdfProcessor.js
  *
  * Description: Contains all logic for loading, rendering, and parsing
- * PDF files using the PDF.js library. Now includes file hashing and pre-fetching
- * the server-side cache.
+ * PDF files using the PDF.js library. Renders pages to SVG for high quality.
+ * Now includes file hashing and pre-fetching the server-side cache.
  */
 
 import { elements } from './dom.js';
@@ -72,6 +72,7 @@ async function fetchServerCache(fileHash) {
 
 async function loadPdf(pdfData) {
     try {
+        // Use the globally available pdfjsLib
         state.pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
         updateStatus(`Rendering ${state.pdfDoc.numPages} page(s)...`);
 
@@ -90,34 +91,51 @@ async function loadPdf(pdfData) {
     }
 }
 
+/**
+ * Renders a single PDF page as an SVG for high quality, and prepares
+ * the text layer for interactivity.
+ * @param {number} pageNum The page number to render.
+ */
 async function renderPage(pageNum) {
     const page = await state.pdfDoc.getPage(pageNum);
-    const scale = 2.0; // Higher scale for better text layer accuracy
+    const scale = 2.0; // Higher scale for better text layer accuracy and SVG quality
     const viewport = page.getViewport({ scale });
 
     const pageDiv = document.createElement('div');
     pageDiv.className = 'pdf-page';
 
-    const canvas = document.createElement('canvas');
-    canvas.className = 'pdf-canvas';
-    const context = canvas.getContext('2d');
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-    canvas.style.width = '100%';
-    canvas.style.height = 'auto';
+    // UPDATED: Container for the SVG output. This replaces the <canvas>.
+    const svgContainer = document.createElement('div');
+    svgContainer.className = 'svg-container';
 
+    // The text layer will be positioned over the SVG.
     const textLayerDiv = document.createElement('div');
     textLayerDiv.className = 'text-layer';
 
-    pageDiv.append(canvas, textLayerDiv);
+    pageDiv.append(svgContainer, textLayerDiv);
     elements.pdfContainer.appendChild(pageDiv);
 
-    await page.render({ canvasContext: context, viewport }).promise;
+    // UPDATED: Use SVGGraphics to render the page to an SVG element instead of a canvas.
+    try {
+        const operatorList = await page.getOperatorList();
+        const svgGfx = new pdfjsLib.SVGGraphics(page.commonObjs, page.objs);
+        const svg = await svgGfx.getSVG(operatorList, viewport);
 
-    // Defer text layer processing until after the canvas has been painted
-    requestAnimationFrame(async () => {
-        await processTextLayer(page, canvas, textLayerDiv, viewport);
-    });
+        // Style the SVG to be responsive within its container.
+        svg.style.width = '100%';
+        svg.style.height = 'auto';
+
+        svgContainer.appendChild(svg);
+
+        // Defer text layer processing until after the SVG has been added to the DOM.
+        // We pass the svgContainer to correctly calculate the text layer positions.
+        requestAnimationFrame(async () => {
+            await processTextLayer(page, svgContainer, textLayerDiv, viewport);
+        });
+    } catch (svgError) {
+        console.error(`Error rendering page ${pageNum} to SVG:`, svgError);
+        pageDiv.textContent = `Error rendering page ${pageNum}.`;
+    }
 }
 
 function groupTextIntoSentences(textItems) {
@@ -126,32 +144,44 @@ function groupTextIntoSentences(textItems) {
     const sentences = [];
     let currentSentenceFragments = [];
     const endOfSentenceRegex = /([.?!])\s*$/;
-    const abbreviationRegex = /(Mr|Mrs|Ms|Dr|Jr|Sr|etc)\.$/i;
+    // Improved abbreviation regex to handle more cases.
+    const abbreviationRegex = /(Mr|Mrs|Ms|Dr|Jr|Sr|etc|i\.e|e\.g)\.$/i;
 
     textItems.forEach(item => {
         if (!item.str.trim()) return;
         currentSentenceFragments.push(item);
         const trimmedText = item.str.trim();
+        // Check for sentence end, but ignore if it looks like an abbreviation.
         if (endOfSentenceRegex.test(trimmedText) && !abbreviationRegex.test(trimmedText)) {
             sentences.push({ fragments: currentSentenceFragments });
             currentSentenceFragments = [];
         }
     });
 
+    // Add any remaining text as the last sentence.
     if (currentSentenceFragments.length > 0) {
         sentences.push({ fragments: currentSentenceFragments });
     }
     return sentences;
 }
 
-async function processTextLayer(page, canvas, textLayerDiv, viewport) {
+/**
+ * Extracts text from the page, groups it into sentences, and creates
+ * invisible, clickable spans over the text for interaction.
+ * @param {PDFPageProxy} page The PDF.js page object.
+ * @param {HTMLElement} renderOutputContainer The container holding the rendered SVG.
+ * @param {HTMLElement} textLayerDiv The div that will contain the interactive spans.
+ * @param {PageViewport} viewport The viewport used for rendering.
+ */
+async function processTextLayer(page, renderOutputContainer, textLayerDiv, viewport) {
     const textContent = await page.getTextContent();
 
     textLayerDiv.innerHTML = '';
 
-    const canvasRect = canvas.getBoundingClientRect();
-    const displayScaleX = canvasRect.width / viewport.width;
-    const displayScaleY = canvasRect.height / viewport.height;
+    // UPDATED: Use the SVG container's dimensions for scaling calculations, not a canvas.
+    const containerRect = renderOutputContainer.getBoundingClientRect();
+    const displayScaleX = containerRect.width / viewport.width;
+    const displayScaleY = containerRect.height / viewport.height;
 
     const groupedSentences = groupTextIntoSentences(textContent.items);
     const sentenceBaseIndex = state.sentences.length;
@@ -164,22 +194,26 @@ async function processTextLayer(page, canvas, textLayerDiv, viewport) {
         sentenceData.fragments.forEach(item => {
             sentenceText += item.str;
 
+            // Get text item's position and dimensions from PDF data.
             const x_pdf = item.transform[4];
             const y_pdf = item.transform[5];
             const width_pdf = item.width;
             const height_pdf = item.height;
 
-            const x_canvas = x_pdf * viewport.scale;
-            const width_canvas = width_pdf * viewport.scale;
-            const height_canvas = height_pdf * viewport.scale;
-            const y_canvas = viewport.height - (y_pdf * viewport.scale) - height_canvas;
+            // Convert PDF coordinates to scaled viewport coordinates.
+            const x_viewport = x_pdf * viewport.scale;
+            const width_viewport = width_pdf * viewport.scale;
+            const height_viewport = height_pdf * viewport.scale;
+            // Y coordinate is inverted in PDF space, so we adjust it.
+            const y_viewport = viewport.height - (y_pdf * viewport.scale) - height_viewport;
 
             const span = document.createElement('span');
 
-            span.style.left = `${x_canvas * displayScaleX}px`;
-            span.style.top = `${y_canvas * displayScaleY}px`;
-            span.style.width = `${width_canvas * displayScaleX}px`;
-            span.style.height = `${height_canvas * displayScaleY}px`;
+            // Position and scale the span to match the rendered text in the SVG.
+            span.style.left = `${x_viewport * displayScaleX}px`;
+            span.style.top = `${y_viewport * displayScaleY}px`;
+            span.style.width = `${width_viewport * displayScaleX}px`;
+            span.style.height = `${height_viewport * displayScaleY}px`;
 
             span.addEventListener('click', () => {
                 jumpToSentenceAndPlay(sentenceIndex);
@@ -187,7 +221,7 @@ async function processTextLayer(page, canvas, textLayerDiv, viewport) {
             sentenceSpans.push(span);
         });
 
-        // Add hover listeners to the collection of spans for this sentence
+        // Add hover listeners to the collection of spans for this sentence.
         sentenceSpans.forEach(span => {
             textLayerDiv.appendChild(span);
             span.addEventListener('mouseenter', () => {
@@ -199,10 +233,11 @@ async function processTextLayer(page, canvas, textLayerDiv, viewport) {
         });
 
         if (sentenceSpans.length > 0) {
-             state.sentences.push({
+            state.sentences.push({
                 text: sentenceText.replace(/\s+/g, ' ').trim(),
                 spans: sentenceSpans,
                 index: sentenceIndex,
+                // Store original y-position for scrolling calculations.
                 y: sentenceData.fragments[0].transform[5],
                 pageHeight: viewport.height / viewport.scale
             });
