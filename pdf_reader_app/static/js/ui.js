@@ -143,3 +143,37 @@ export function resetUIForNewFile() {
         updateApiStatus();
     }
 }
+
+/**
+ * Updates the speed display element with the current speed.
+ */
+export function updateSpeedDisplay() {
+    const speed = state.readingSpeed;
+    elements.speedDisplay.textContent = `${speed.toFixed(1)}x`;
+}
+
+function setReadingSpeed(speed) {
+    const newSpeed = Math.max(0.3, Math.min(speed, 3.0));
+    state.readingSpeed = parseFloat(newSpeed.toFixed(2));
+}
+
+/**
+ * Handles the click event for the increase speed button.
+ */
+export function handleIncreaseSpeed() {
+    let currentSpeed = state.readingSpeed;
+    setReadingSpeed(currentSpeed + 0.2);
+    updateSpeedDisplay();
+    updateCurrentAudioSpeed(); // Update speed of currently playing audio
+}
+
+
+/**
+ * Handles the click event for the decrease speed button.
+ */
+export function handleDecreaseSpeed() {
+    let currentSpeed = state.readingSpeed;
+    setReadingSpeed(currentSpeed - 0.2);
+    updateSpeedDisplay();
+    updateCurrentAudioSpeed(); // Update speed of currently playing audio
+}
