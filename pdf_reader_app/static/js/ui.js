@@ -162,7 +162,7 @@ function setReadingSpeed(speed) {
  */
 export function handleIncreaseSpeed() {
     let currentSpeed = state.readingSpeed;
-    setReadingSpeed(currentSpeed + 0.2);
+    setReadingSpeed(currentSpeed + 0.1);
     updateSpeedDisplay();
     updateCurrentAudioSpeed(); // Update speed of currently playing audio
 }
@@ -173,7 +173,7 @@ export function handleIncreaseSpeed() {
  */
 export function handleDecreaseSpeed() {
     let currentSpeed = state.readingSpeed;
-    setReadingSpeed(currentSpeed - 0.2);
+    setReadingSpeed(currentSpeed - 0.1);
     updateSpeedDisplay();
     updateCurrentAudioSpeed(); // Update speed of currently playing audio
 }
