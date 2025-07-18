@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto p-4 md:p-8 max-w-5xl">
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900">PDF Aloud</h1>
+        <p class="text-lg text-gray-600 mt-2">Upload a PDF to have it read to you with sentence highlighting.</p>
+    </header>
+
+    <!-- Controls Section -->
+    <div id="controls" class="bg-white p-6 rounded-xl shadow-md mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 sticky top-4 z-20 transition-all duration-300">
+        <!-- This wrapper will be hidden on scroll -->
+        <div id="file-upload-wrapper" class="flex-grow w-full sm:w-auto">
+            <label for="pdf-upload" class="sr-only">Upload PDF</label>
+            <input type="file" id="pdf-upload" accept="application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        </div>
+        <!-- This wrapper will be centered on scroll -->
+        <div id="playback-buttons-wrapper" class="flex items-center gap-2">
+            <button id="rewind-btn" class="p-2 bg-gray-200 text-gray-700 rounded-full font-semibold shadow-sm hover:bg-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors" disabled title="Rewind 15s">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                    <text x="12" y="12.5" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="bold" fill="currentColor">15</text>
+                </svg>
+            </button>
+             <button id="prev-btn" class="p-2 bg-gray-200 text-gray-700 rounded-full font-semibold shadow-sm hover:bg-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>
+            </button>
+            <button id="play-btn" class="px-4 py-2 bg-blue-600 text-white rounded-full font-semibold shadow-sm hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Play
+            </button>
+            <button id="pause-btn" class="px-4 py-2 bg-yellow-500 text-white rounded-full font-semibold shadow-sm hover:bg-yellow-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                Pause
+            </button>
+            <button id="stop-btn" class="px-4 py-2 bg-red-600 text-white rounded-full font-semibold shadow-sm hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                Stop
+            </button>
+             <button id="next-btn" class="p-2 bg-gray-200 text-gray-700 rounded-full font-semibold shadow-sm hover:bg-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>
+            </button>
+            <button id="forward-btn" class="p-2 bg-gray-200 text-gray-700 rounded-full font-semibold shadow-sm hover:bg-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors" disabled title="Forward 15s">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <text x="12" y="12.5" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="bold" fill="currentColor">15</text>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtering and Voice Options -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800">Content Filtering</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Skip Authors/Affiliations</span>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" id="skip-authors" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                        <label for="skip-authors" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Skip Citations</span>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" id="skip-citations" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                        <label for="skip-citations" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Skip Math/Formulas</span>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" id="skip-math" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                        <label for="skip-math" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+                 <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Skip Figure Captions</span>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" id="skip-figure-captions" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                        <label for="skip-figure-captions" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Skip Headers/Footers</span>
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" id="skip-headers-footers" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                        <label for="skip-headers-footers" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800">Premium Voice (Google Cloud TTS)</h3>
+            <div class="space-y-3">
+                <div class="flex gap-2">
+                    <input type="password" id="api-key-input" placeholder="Enter Google Cloud API Key" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="validate-key-btn" class="px-3 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600">Verify</button>
+                    <button id="clear-key-btn" class="px-3 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 hidden">Remove</button>
+                </div>
+                <p id="api-key-status" class="text-xs text-gray-500">
+                    To use premium voices, you need a Google Cloud API key.
+                    <a href="#" id="api-key-help-link" class="text-blue-600 hover:underline">How do I get a key?</a>
+                </p>
+                <div id="voice-selection-container" class="hidden">
+                     <button id="change-voice-btn" class="mt-2 w-full px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600">Change Voice</button>
+                     <p id="current-voice-display" class="text-sm text-gray-600 mt-2 text-center"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Help Modal -->
+    <div id="api-key-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full m-4">
+            <h2 class="text-2xl font-bold mb-4">How to get a Google Cloud TTS API Key</h2>
+            <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" class="text-blue-600 hover:underline">Google Cloud Console</a>.</li>
+                <li>Create a new project or select an existing one.</li>
+                <li>Enable the "Cloud Text-to-Speech API" for your project. You can find it in the API Library.</li>
+                <li>Go to "Credentials" and click "Create Credentials" -> "API key".</li>
+                <li>Copy the generated API key and paste it into the input box.</li>
+                <li><strong>Important:</strong> For security, it's highly recommended to restrict your API key to only be usable by the Cloud Text-to-Speech API.</li>
+            </ol>
+            <button id="close-api-key-modal-btn" class="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Close</button>
+        </div>
+    </div>
+
+    <!-- Voice Selection Modal -->
+    <div id="voice-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-4xl w-full m-4 h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Select a Voice</h2>
+                <button id="close-voice-modal-btn" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            </div>
+
+            <div class="mb-4">
+                <label for="language-select" class="block text-sm font-medium text-gray-700">Language</label>
+                <select id="language-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <!-- Language options will be populated here -->
+                </select>
+            </div>
+
+            <div id="voice-tier-container" class="flex-grow overflow-y-auto pr-2 space-y-4">
+                <!-- Voice tier cards will be populated here -->
+            </div>
+
+             <div class="mt-4 pt-4 border-t flex justify-end">
+                <button id="save-voice-selection-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">Save Selection</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Status and PDF Viewer -->
+    <div id="viewer-container" class="bg-white p-4 md:p-8 rounded-xl shadow-md min-h-[60vh]">
+        <div id="status-message" class="text-center text-gray-500">
+            <p>Please select a PDF file to begin.</p>
+        </div>
+        <div id="pdf-container"></div>
+    </div>
+
+    <!-- Jump to Reading Button -->
+    <button id="jump-to-reading-btn" class="hidden fixed bottom-6 right-6 bg-indigo-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-indigo-700 transition-all z-30 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+        Jump to Reading
+    </button>
+</div>
+{% endblock %}
