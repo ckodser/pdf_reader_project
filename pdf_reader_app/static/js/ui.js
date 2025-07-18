@@ -7,6 +7,7 @@
 
 import { elements } from './dom.js';
 import state from './state.js';
+import {updateCurrentAudioSpeed} from './playback.js';
 
 export function updateStatus(message) {
     elements.statusMessage.textContent = message;
