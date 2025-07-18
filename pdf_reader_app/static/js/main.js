@@ -10,6 +10,7 @@ import { elements } from './dom.js';
 import { loadApiKeyFromCookie, loadVoiceSettingsFromCookie, validateAndSaveApiKey, clearApiKey, renderVoiceTiers, saveVoiceSelection } from './apiKeyHandler.js';
 import { handleFileSelect } from './pdfProcessor.js';
 import * as playback from './playback.js';
+import * as ui from './ui.js';
 import { showApiKeyModal, hideApiKeyModal, showVoiceModal, hideVoiceModal, checkAndShowJumpButton, jumpToCurrentSentence, handleScroll } from './ui.js';
 
 function initialize() {
@@ -27,7 +28,12 @@ function initialize() {
     elements.stopBtn.addEventListener('click', playback.stop);
     elements.prevBtn.addEventListener('click', playback.previousSentence);
     elements.nextBtn.addEventListener('click', playback.nextSentence);
-    // NEW: Seek button listeners
+
+    //SPEED Adjust
+    elements.increaseSpeedBtn.addEventListener('click', ui.handleIncreaseSpeed);
+    elements.decreaseSpeedBtn.addEventListener('click', ui.handleDecreaseSpeed);
+
+    // Seek button listeners
     elements.rewindBtn.addEventListener('click', playback.seekBackward);
     elements.forwardBtn.addEventListener('click', playback.seekForward);
 

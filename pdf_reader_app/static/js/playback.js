@@ -136,6 +136,7 @@ async function speakWithGoogleApi(textToSpeak) {
 
     const playAudioFromUrl = (url) => {
         state.globalAudioElement.src = url;
+        state.globalAudioElement.playbackRate=state.readingSpeed;
         state.globalAudioElement.onended = () => {
             if (!state.isSpeaking) return;
             state.currentSentenceIndex++;
@@ -311,4 +312,15 @@ function filterSentence(sentence) {
     }
     textToSpeak = textToSpeak.replace(/\s\s+/g, ' ').trim();
     return { textToSpeak, shouldSkip: false };
+}
+
+/**
+ * Updates the playback speed of the currently playing audio.
+ */
+export function updateCurrentAudioSpeed() {
+    if (state.globalAudioElement && state.globalAudioElement.src) {
+        state.globalAudioElement.playbackRate=state.readingSpeed
+    }else{
+        console.log("NO Audio is being played. ")
+    }
 }

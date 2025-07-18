@@ -9,23 +9,25 @@ export const elements = {
     // Main Controls
     pdfUpload: document.getElementById('pdf-upload'),
     controls: document.getElementById('controls'),
+    speedDisplay: document.getElementById('speed-display'),
     playBtn: document.getElementById('play-btn'),
     pauseBtn: document.getElementById('pause-btn'),
     stopBtn: document.getElementById('stop-btn'),
     prevBtn: document.getElementById('prev-btn'),
     nextBtn: document.getElementById('next-btn'),
+    // NEW: Speed selection
+    increaseSpeedBtn: document.getElementById('increase-speed-btn'),
+    decreaseSpeedBtn: document.getElementById('decrease-speed-btn'),
     // NEW: Seek buttons
     rewindBtn: document.getElementById('rewind-btn'),
     forwardBtn: document.getElementById('forward-btn'),
     // NEW: Control wrappers for dynamic layout
     fileUploadWrapper: document.getElementById('file-upload-wrapper'),
     playbackButtonsWrapper: document.getElementById('playback-buttons-wrapper'),
-
     // Viewer and Status
     viewerContainer: document.getElementById('viewer-container'),
     statusMessage: document.getElementById('status-message'),
     pdfContainer: document.getElementById('pdf-container'),
-
     // Filtering Toggles
     skipAuthorsToggle: document.getElementById('skip-authors'),
     skipCitationsToggle: document.getElementById('skip-citations'),

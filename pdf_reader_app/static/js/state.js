@@ -19,6 +19,7 @@ const state = {
     selectedVoiceName: 'en-US-Wavenet-D', // Default premium voice
     totalApiCost: 0,
     abstractFound: false,
+    readingSpeed: 1.0,
 };
 
 // We export the state object directly, but in a larger app, you might

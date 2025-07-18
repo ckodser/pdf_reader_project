@@ -17,6 +17,12 @@
         </div>
         <!-- This wrapper will be centered on scroll -->
         <div id="playback-buttons-wrapper" class="flex items-center gap-2">
+            <div class="speed-controls">
+                <button id="decrease-speed-btn" class="control-btn speed-btn">-</button>
+                <span id="speed-display">1.0x</span>
+                <button id="increase-speed-btn" class="control-btn speed-btn">+</button>
+            </div>
+
             <button id="rewind-btn" class="p-2 bg-gray-200 text-gray-700 rounded-full font-semibold shadow-sm hover:bg-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors" disabled title="Rewind 15s">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
